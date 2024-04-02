@@ -1757,7 +1757,7 @@ static void openwifi_beacon_work(struct work_struct *work)
 		goto resched;
 
 	/* grab a fresh beacon */
-	skb = ieee80211_beacon_get(dev, vif);
+	skb = ieee80211_beacon_get(dev, vif, 0);
 	if (!skb)
 		goto resched;
 
@@ -1865,7 +1865,7 @@ static int openwifi_config(struct ieee80211_hw *dev, u32 changed)
 static void openwifi_bss_info_changed(struct ieee80211_hw *dev,
 				     struct ieee80211_vif *vif,
 				     struct ieee80211_bss_conf *info,
-				     u32 changed)
+				     u64 changed)
 {
 	struct openwifi_priv *priv = dev->priv;
 	struct openwifi_vif *vif_priv;
@@ -1902,7 +1902,7 @@ static void openwifi_bss_info_changed(struct ieee80211_hw *dev,
 		printk("%s openwifi_bss_info_changed WARNING BSS_CHANGED_BASIC_RATES %x\n",sdr_compatible_str,info->basic_rates);
 
 	if (changed & (BSS_CHANGED_ERP_SLOT | BSS_CHANGED_ERP_PREAMBLE)) {
-		printk("%s openwifi_bss_info_changed WARNING BSS_CHANGED_ERP_SLOT %d BSS_CHANGED_ERP_PREAMBLE %d short slot %d\n",sdr_compatible_str,
+		printk("%s openwifi_bss_info_changed WARNING BSS_CHANGED_ERP_SLOT %llu BSS_CHANGED_ERP_PREAMBLE %llu short slot %d\n",sdr_compatible_str,
 		changed&BSS_CHANGED_ERP_SLOT,changed&BSS_CHANGED_ERP_PREAMBLE,info->use_short_slot);
 		if (info->use_short_slot && priv->use_short_slot==false) {
 			priv->use_short_slot=true;
@@ -1924,7 +1924,7 @@ static void openwifi_bss_info_changed(struct ieee80211_hw *dev,
 			schedule_work(&vif_priv->beacon_work.work);
 			printk("%s openwifi_bss_info_changed WARNING enable_beacon\n",sdr_compatible_str);
 		}
-		printk("%s openwifi_bss_info_changed WARNING BSS_CHANGED_BEACON_ENABLED %d BSS_CHANGED_BEACON %d\n",sdr_compatible_str,
+		printk("%s openwifi_bss_info_changed WARNING BSS_CHANGED_BEACON_ENABLED %llu BSS_CHANGED_BEACON %llu\n",sdr_compatible_str,
 		changed&BSS_CHANGED_BEACON_ENABLED,changed&BSS_CHANGED_BEACON);
 	}
 }
@@ -1938,7 +1938,7 @@ u32 log2val(u32 val){
 	return ret_val ;
 }
 
-static int openwifi_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif, u16 queue,
+static int openwifi_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif, unsigned int link_id, u16 queue,
 	      const struct ieee80211_tx_queue_params *params)
 {
 	struct openwifi_priv *priv = dev->priv;
@@ -2022,6 +2022,7 @@ static void openwifi_configure_filter(struct ieee80211_hw *dev,
 static int openwifi_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif, struct ieee80211_ampdu_params *params)
 {
 	struct ieee80211_sta *sta = params->sta;
+	struct ieee80211_link_sta *link = &(sta->deflink);
 	enum ieee80211_ampdu_mlme_action action = params->action;
 	// struct openwifi_priv *priv = hw->priv;
 	u16 max_tx_bytes, buf_size;
@@ -2046,11 +2047,11 @@ static int openwifi_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *
 		case IEEE80211_AMPDU_TX_OPERATIONAL:
 			buf_size = 4;
 //			buf_size = (params->buf_size) - 1;
-			max_tx_bytes = (1 << (IEEE80211_HT_MAX_AMPDU_FACTOR + sta->ht_cap.ampdu_factor)) - 1;
-			ampdu_action_config = ( sta->ht_cap.ampdu_density<<24 | buf_size<<16 | max_tx_bytes );
+			max_tx_bytes = (1 << (IEEE80211_HT_MAX_AMPDU_FACTOR + link->ht_cap.ampdu_factor)) - 1;
+			ampdu_action_config = ( link->ht_cap.ampdu_density<<24 | buf_size<<16 | max_tx_bytes );
 			tx_intf_api->TX_INTF_REG_AMPDU_ACTION_CONFIG_write(ampdu_action_config);
 			printk("%s openwifi_ampdu_action: TX operational. tid %d max_tx_bytes %d ampdu_density %d buf_size %d\n", 
-			sdr_compatible_str, params->tid, max_tx_bytes, sta->ht_cap.ampdu_density, buf_size);
+			sdr_compatible_str, params->tid, max_tx_bytes, link->ht_cap.ampdu_density, buf_size);
 			break;
 		case IEEE80211_AMPDU_RX_START:
 			printk("%s openwifi_ampdu_action: start RX aggregation. tid %d\n", sdr_compatible_str, params->tid);
@@ -2067,6 +2068,7 @@ static int openwifi_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *
 
 static const struct ieee80211_ops openwifi_ops = {
 	.tx			       = openwifi_tx,
+    .wake_tx_queue	   = ieee80211_handle_wake_tx_queue,
 	.start			   = openwifi_start,
 	.stop			   = openwifi_stop,
 	.add_interface	   = openwifi_add_interface,
@@ -2662,3 +2664,5 @@ static struct platform_driver openwifi_dev_driver = {
 };
 
 module_platform_driver(openwifi_dev_driver);
+
+
