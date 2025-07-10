@@ -22,7 +22,7 @@
 		spi0: spi@e0006000 {
 			status = "okay";
 
-			ad9361-phy@0 {
+			ad9361_phy: ad9361-phy@0 {
 				#address-cells = <0x1>;
 				#size-cells = <0x0>;
 				#clock-cells = <0x1>;
@@ -127,8 +127,6 @@
 				reset-gpios = <0x6 0x64 0x0>;
 				enable-gpios = <0x6 0x65 0x0>;
 				txnrx-gpios = <0x6 0x66 0x0>;
-				linux,phandle = <0xc>;
-				phandle = <0xc>;
 			};
 		};
 
@@ -374,13 +372,13 @@
 			reg = <0x79020000 0x6000>;
 			// dmas = <0xb 0x0>;
 			// dma-names = "rx";
-			spibus-connected = <0xc>;
+			spibus-connected = <&ad9361_phy>;
 		};
 
 		cf-ad9361-dds-core-lpc@79024000 {
 			compatible = "adi,axi-ad9361-dds-6.00.a";
 			reg = <0x79024000 0x1000>;
-			clocks = <0xc 0xd>;
+			clocks = <&ad9361_phy 0xd>;
 			clock-names = "sampl_clk";
 			// dmas = <0xd 0x0>;
 			// dma-names = "tx";
@@ -390,11 +388,6 @@
 			compatible = "mathworks,mwipcore-axi4lite-v1.00";
 			reg = <0x43c00000 0xffff>;
 		};
-
-		/*axi-sysid-0@45000000 {
-			compatible = "adi,axi-sysid-1.00.a";
-			reg = <0x45000000 0x10000>;
-		};*/
 	};
 
 	leds {
