@@ -122,11 +122,11 @@
 				adi,aux-dac2-default-value-mV = <0x0>;
 				adi,aux-dac2-rx-delay-us = <0x0>;
 				adi,aux-dac2-tx-delay-us = <0x0>;
-				en_agc-gpios = <0x6 0x62 0x0>;
-				sync-gpios = <0x6 0x63 0x0>;
-				reset-gpios = <0x6 0x64 0x0>;
-				enable-gpios = <0x6 0x65 0x0>;
-				txnrx-gpios = <0x6 0x66 0x0>;
+				en_agc-gpios = <&gpio0 0x62 0x0>;
+				sync-gpios = <&gpio0 0x63 0x0>;
+				reset-gpios = <&gpio0 0x64 0x0>;
+				enable-gpios = <&gpio0 0x65 0x0>;
+				txnrx-gpios = <&gpio0 0x66 0x0>;
 			};
 		};
 
@@ -194,7 +194,7 @@
 		#clock-cells = <0x0>;
 		compatible = "gpio-gate-clock";
 		clocks = <&40M_adj_clk>;
-		enable-gpios = <0x6 0x69 0x0>;
+		enable-gpios = <&gpio0 0x69 0x0>;
 		clk-set-rate-parent-enable;
 		clock-output-names = "ad9361_ext_refclk";
 	};
@@ -203,7 +203,7 @@
 		#clock-cells = <0x0>;
 		compatible = "gpio-gate-clock";
 		clocks = <&24M_fixed_clk>;
-		enable-gpios = <0x6 0x9 0x1>;
+		enable-gpios = <&gpio0 0x9 0x1>;
 	};
 
 	fpga-axi@0 {
@@ -395,22 +395,22 @@
 
 		led0 {
 			label = "led0:green";
-			gpios = <0x6 0x3a 0x0>;
+			gpios = <&gpio0 0x3a 0x0>;
 		};
 
 		led1 {
 			label = "led1:green";
-			gpios = <0x6 0x3b 0x0>;
+			gpios = <&gpio0 0x3b 0x0>;
 		};
 
 		led2 {
 			label = "led2:green";
-			gpios = <0x6 0x3c 0x0>;
+			gpios = <&gpio0 0x3c 0x0>;
 		};
 
 		led3 {
 			label = "led3:green";
-			gpios = <0x6 0x3d 0x0>;
+			gpios = <&gpio0 0x3d 0x0>;
 		};
 	};
 
@@ -423,53 +423,53 @@
 		pb0 {
 			label = "Left";
 			linux,code = <0x69>;
-			gpios = <0x6 0x36 0x0>;
+			gpios = <&gpio0 0x36 0x0>;
 		};
 
 		pb1 {
 			label = "Right";
 			linux,code = <0x6a>;
-			gpios = <0x6 0x37 0x0>;
+			gpios = <&gpio0 0x37 0x0>;
 		};
 
 		pb2 {
 			label = "Up";
 			linux,code = <0x67>;
-			gpios = <0x6 0x38 0x0>;
+			gpios = <&gpio0 0x38 0x0>;
 		};
 
 		pb3 {
 			label = "Down";
 			linux,code = <0x6c>;
-			gpios = <0x6 0x39 0x0>;
+			gpios = <&gpio0 0x39 0x0>;
 		};
 
 		sw0 {
 			label = "SW0";
 			linux,input-type = <0x5>;
 			linux,code = <0x0>;
-			gpios = <0x6 0x3e 0x0>;
+			gpios = <&gpio0 0x3e 0x0>;
 		};
 
 		sw1 {
 			label = "SW1";
 			linux,input-type = <0x5>;
 			linux,code = <0x1>;
-			gpios = <0x6 0x3f 0x0>;
+			gpios = <&gpio0 0x3f 0x0>;
 		};
 
 		sw2 {
 			label = "SW2";
 			linux,input-type = <0x5>;
 			linux,code = <0x2>;
-			gpios = <0x6 0x40 0x0>;
+			gpios = <&gpio0 0x40 0x0>;
 		};
 
 		sw3 {
 			label = "SW3";
 			linux,input-type = <0x5>;
 			linux,code = <0x3>;
-			gpios = <0x6 0x41 0x0>;
+			gpios = <&gpio0 0x41 0x0>;
 		};
 	};
 };
