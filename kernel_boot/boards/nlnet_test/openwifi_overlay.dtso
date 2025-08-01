@@ -82,10 +82,9 @@
 
 				axidmatest_1: axidmatest@1 {
 					compatible ="xlnx,axi-dma-test-1.00.a";
-					dmas = <&rx_dma 0
-						&rx_dma 1>;
+					dmas = <&rx_dma 0 &rx_dma 1>;
 					dma-names = "axidma0", "axidma1";
-				} ;
+				};
 
 				tx_dma: dma@80400000 {
 					#dma-cells = <1>;
