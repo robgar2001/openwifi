@@ -90,4 +90,20 @@
             };
         };
     };
+
+    
+    // Fix ethernet node in tree
+	fragment@2{
+		target-path = "/amba/ethernet@e000b000";
+		__overlay__{
+			phy-handle = <&phy0>;
+			phy0: phy@0 {
+				device_type = "ethernet-phy";
+				reg = <0x0>;
+				marvell,reg-init = <0x3 0x10 0xff00 0x1e 0x3 0x11 0xfff0 0x0>;
+			};
+		};
+
+	};
+    
 };
