@@ -17,14 +17,21 @@ if [ "$#" -lt 1 ]; then
     exit 1
 fi
 
-# Check if fixed devicetree.dts present (if so, we should not use overlays)
+echo "---Compiling the device tree overlays---"
+echo "---Compiling openwifi overlay---"
+dtc -@ -I dts -O dtb -o openwifi_overlay.dtbo openwifi_overlay.dtso
+echo "---Compiling openwifi $BOARD_NAME overlay---"
+dtc -@ -I dts -O dtb -o ./$BOARD_NAME/$BOARD_NAME.dtbo ./overlays/$BOARD_NAME.dtso
+
+# Check if fixed devicetree.dts present (if so, we should only compile overlays)
 if [ -f "$BOARD_NAME/devicetree.dts" ]; then
-  echo "There is a fixed device tree present for $BOARD_NAME, not using overlays"
+  echo "There is a fixed device tree present for $BOARD_NAME, only compile overlays"
   exit 1
 fi
 
-declare -A openwifi_name_to_kernel_dts
 
+
+declare -A openwifi_name_to_kernel_dts
 openwifi_name_to_kernel_dts=(
   ["adrv9361z7035"]="zynq-adrv9361.dts"
   ["zed_fmcs2"]="zynq-zed.dts"
@@ -44,12 +51,6 @@ fi
 echo "---Generating the default (non-openwifi) device tree for $BOARD_NAME---"
 cpp -nostdinc -x assembler-with-cpp -I$DTSI_FOLDER -o ./$BOARD_NAME/default_devicetree.dts $DEFAULT_DTS_FOLDER/$DEFAULT_DTS_FILENAME
 dtc -@ -O dtb -o ./$BOARD_NAME/default_devicetree.dtb ./$BOARD_NAME/default_devicetree.dts
-
-echo "---Compiling the device tree overlays---"
-echo "---Compiling openwifi overlay---"
-dtc -@ -I dts -O dtb -o openwifi_overlay.dtbo openwifi_overlay.dtso
-echo "---Compiling openwifi $BOARD_NAME overlay---"
-dtc -@ -I dts -O dtb -o ./$BOARD_NAME/$BOARD_NAME.dtbo ./overlays/$BOARD_NAME.dtso
 
 echo "---Applying openwifi overlays onto default device tree---"
 fdtoverlay -i ./$BOARD_NAME/default_devicetree.dtb -o ./$BOARD_NAME/devicetree.dtb -v openwifi_overlay.dtbo ./$BOARD_NAME/$BOARD_NAME.dtbo
