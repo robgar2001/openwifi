@@ -106,16 +106,23 @@ if [ "$SKIP_BOOT" == "0" ]; then
       if [ "$BOARD_NAME_TMP" == "zcu102_fmcs2" ] || [ "$BOARD_NAME_TMP" == "zcu102_9371" ]; then
           dtb_filename_tmp="system.dtb"
           dts_filename_tmp="system.dts"
+          LINUX_KERNEL_PATH=$OPENWIFI_DIR/$LINUX_KERNEL_SRC_DIR_NAME64
+          DEFAULT_DTS_PATH=$LINUX_KERNEL_PATH/arch/arm64/boot/dts/xilinx
       else
           dtb_filename_tmp="devicetree.dtb"
           dts_filename_tmp="devicetree.dts"
-          kernel_img_filename_tmp=$OPENWIFI_DIR/$LINUX_KERNEL_SRC_DIR_NAME32/arch/arm/boot/uImage
+          LINUX_KERNEL_PATH=$OPENWIFI_DIR/$LINUX_KERNEL_SRC_DIR_NAME32
+          DEFAULT_DTS_PATH=$LINUX_KERNEL_PATH/arch/arm/boot/dts
+          kernel_img_filename_tmp=$LINUX_KERNEL_PATH/arch/arm/boot/uImage
       fi
       ./boot_bin_gen.sh $XILINX_DIR $BOARD_NAME_TMP $OPENWIFI_HW_IMG_DIR/boards/$BOARD_NAME_TMP/sdk/system_top.xsa
       echo $dtb_filename_tmp
       echo $dts_filename_tmp
 
-      dtc -I dts -O dtb -o $OPENWIFI_DIR/kernel_boot/boards/$BOARD_NAME_TMP/$dtb_filename_tmp $OPENWIFI_DIR/kernel_boot/boards/$BOARD_NAME_TMP/$dts_filename_tmp
+      # Generate device tree products for board
+      sh $OPENWIFI_DIR/kernel_boot/boards/construct_device_tree.sh $BOARD_NAME_TMP $DEFAULT_DTS_PATH
+
+      # Copy device tree to kuiper SD card
       sudo mkdir -p $SDCARD_DIR/BOOT/openwifi/$BOARD_NAME_TMP
       sudo cp $OPENWIFI_DIR/kernel_boot/boards/$BOARD_NAME_TMP/$dtb_filename_tmp $SDCARD_DIR/BOOT/openwifi/$BOARD_NAME_TMP/
       sudo cp $OPENWIFI_DIR/kernel_boot/boards/$BOARD_NAME_TMP/output_boot_bin/BOOT.BIN $SDCARD_DIR/BOOT/openwifi/$BOARD_NAME_TMP/
