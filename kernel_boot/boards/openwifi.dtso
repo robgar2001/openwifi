@@ -354,12 +354,6 @@
 				disable-wp;
 			};
 
-			slcr: slcr@f8000000 {
-				clkc: clkc@100 {
-					ps-clk-frequency = <0x1fca055>;
-				};
-			};
-
 			usb0: usb@e0002000 {
 				xlnx,phy-reset-gpio = <0x6 0x7 0x0>;
 			};
