@@ -19,7 +19,7 @@ fi
 
 echo "---Compiling the device tree overlays---"
 echo "---Compiling openwifi overlay---"
-dtc -@ -I dts -O dtb -o openwifi_overlay.dtbo openwifi_overlay.dtso
+dtc -@ -I dts -O dtb -o openwifi.dtbo openwifi.dtso
 echo "---Compiling openwifi $BOARD_NAME overlay---"
 dtc -@ -I dts -O dtb -o ./$BOARD_NAME/$BOARD_NAME.dtbo ./overlays/$BOARD_NAME.dtso
 
