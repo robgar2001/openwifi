@@ -53,6 +53,6 @@ cpp -nostdinc -x assembler-with-cpp -I$DTSI_FOLDER -o ./$BOARD_NAME/default_devi
 dtc -@ -O dtb -o ./$BOARD_NAME/default_devicetree.dtb ./$BOARD_NAME/default_devicetree.dts
 
 echo "---Applying openwifi overlays onto default device tree---"
-fdtoverlay -i ./$BOARD_NAME/default_devicetree.dtb -o ./$BOARD_NAME/devicetree.dtb -v openwifi_overlay.dtbo ./$BOARD_NAME/$BOARD_NAME.dtbo
+fdtoverlay -i ./$BOARD_NAME/default_devicetree.dtb -o ./$BOARD_NAME/devicetree.dtb -v openwifi.dtbo ./$BOARD_NAME/$BOARD_NAME.dtbo
 echo "---Decompiling the device tree (sanity check)---"
 dtc -I dtb -O dts -o ./$BOARD_NAME/full_devicetree.dts ./$BOARD_NAME/devicetree.dtb
