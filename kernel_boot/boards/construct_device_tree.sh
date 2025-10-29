@@ -26,7 +26,7 @@ dtc -@ -I dts -O dtb -o ./$BOARD_NAME/$BOARD_NAME.dtbo ./overlays/$BOARD_NAME.dt
 # Check if fixed devicetree.dts present (if so, we should only compile overlays)
 if [ -f "$BOARD_NAME/devicetree.dts" ]; then
   echo "WARNING: There is a fixed device tree present for $BOARD_NAME, only compiling overlays"
-  exit 1
+  exit 0
 fi
 
 
