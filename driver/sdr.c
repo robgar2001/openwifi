@@ -373,7 +373,7 @@ static void openwifi_free_tx_ring(struct openwifi_priv *priv, int ring_idx)
     if (ring->bds[i].skb_linked == 0 && ring->bds[i].dma_mapping_addr == 0)
       continue;
     if (ring->bds[i].dma_mapping_addr != 0)
-      dma_unmap_single(priv->tx_chan->device->dev, ring->bds[i].dma_mapping_addr,ring->bds[i].skb_linked->len, DMA_MEM_TO_DEV);
+      dma_unmap_single(priv->tx_chan->device->dev, ring->bds[i].dma_mapping_addr,ring->bds[i].skb_linked->len, DMA_TO_DEVICE);
 //    if (ring->bds[i].skb_linked!=NULL)
 //      dev_kfree_skb(ring->bds[i].skb_linked); // only use dev_kfree_skb when there is exception
     if ( (ring->bds[i].dma_mapping_addr != 0 && ring->bds[i].skb_linked == 0) ||
@@ -751,7 +751,7 @@ static irqreturn_t openwifi_tx_interrupt(int irq, void *dev_id)
         skb = ring->bds[ring->bd_rd_idx].skb_linked;
 
         dma_unmap_single(priv->tx_chan->device->dev,ring->bds[ring->bd_rd_idx].dma_mapping_addr,
-            skb->len, DMA_MEM_TO_DEV);
+            skb->len, DMA_TO_DEVICE);
 
         info = IEEE80211_SKB_CB(skb);
         use_ht_aggr = ((info->flags&IEEE80211_TX_CTL_AMPDU)!=0);
@@ -1068,7 +1068,7 @@ static void openwifi_tx(struct ieee80211_hw *dev,
         // tell Linux this skb failed
         skb_new = ring->bds[j].skb_linked;
         dma_unmap_single(priv->tx_chan->device->dev,ring->bds[j].dma_mapping_addr,
-              skb_new->len, DMA_MEM_TO_DEV);
+              skb_new->len, DMA_TO_DEVICE);
         info_skipped = IEEE80211_SKB_CB(skb_new);
         ieee80211_tx_info_clear_status(info_skipped);
         info_skipped->status.rates[0].count = 1;
@@ -1416,7 +1416,7 @@ static void openwifi_tx(struct ieee80211_hw *dev,
 
 //-------------------------fire skb DMA to hardware----------------------------------
   dma_mapping_addr = dma_map_single(priv->tx_chan->device->dev, dma_buf,
-         num_dma_byte, DMA_MEM_TO_DEV);
+         num_dma_byte, DMA_TO_DEVICE);
 
   if (dma_mapping_error(priv->tx_chan->device->dev,dma_mapping_addr)) {
     // dev_err(priv->tx_chan->device->dev, "sdr,sdr openwifi_tx: WARNING TX DMA mapping error\n");
@@ -1465,7 +1465,7 @@ static void openwifi_tx(struct ieee80211_hw *dev,
   return;
 
 openwifi_tx_after_dma_mapping:
-  dma_unmap_single(priv->tx_chan->device->dev, dma_mapping_addr, num_dma_byte, DMA_MEM_TO_DEV);
+  dma_unmap_single(priv->tx_chan->device->dev, dma_mapping_addr, num_dma_byte, DMA_TO_DEVICE);
 
 openwifi_tx_early_out_after_lock:
   spin_unlock_irqrestore(&priv->lock, flags);
@@ -1716,7 +1716,7 @@ err_dma:
   return ret;
 }
 
-static void openwifi_stop(struct ieee80211_hw *dev)
+static void openwifi_stop(struct ieee80211_hw *dev, bool suspend)
 {
   struct openwifi_priv *priv = dev->priv;
   u32 reg, reg1;
@@ -1966,17 +1966,17 @@ static void openwifi_bss_info_changed(struct ieee80211_hw *dev,
   if (changed & BSS_CHANGED_BASIC_RATES)
     printk("%s openwifi_bss_info_changed WARNING BSS_CHANGED_BASIC_RATES %x\n",sdr_compatible_str,info->basic_rates);
 
-	if (changed & (BSS_CHANGED_ERP_SLOT | BSS_CHANGED_ERP_PREAMBLE)) {
-		printk("%s openwifi_bss_info_changed WARNING BSS_CHANGED_ERP_SLOT %llu BSS_CHANGED_ERP_PREAMBLE %llu short slot %d\n",sdr_compatible_str,
-		changed&BSS_CHANGED_ERP_SLOT,changed&BSS_CHANGED_ERP_PREAMBLE,info->use_short_slot);
-		if (info->use_short_slot && priv->use_short_slot==false) {
-			priv->use_short_slot=true;
-			xpu_api->XPU_REG_BAND_CHANNEL_write( (priv->use_short_slot<<24)|(priv->band<<16) );
-		} else if ((!info->use_short_slot) && priv->use_short_slot==true) {
-			priv->use_short_slot=false;
-			xpu_api->XPU_REG_BAND_CHANNEL_write( (priv->use_short_slot<<24)|(priv->band<<16) );
-		}
-	}
+  if (changed & (BSS_CHANGED_ERP_SLOT | BSS_CHANGED_ERP_PREAMBLE)) {
+    printk("%s openwifi_bss_info_changed WARNING BSS_CHANGED_ERP_SLOT %llu BSS_CHANGED_ERP_PREAMBLE %llu short slot %d\n",sdr_compatible_str,
+    changed&BSS_CHANGED_ERP_SLOT,changed&BSS_CHANGED_ERP_PREAMBLE,info->use_short_slot);
+    if (info->use_short_slot && priv->use_short_slot==false) {
+      priv->use_short_slot=true;
+      xpu_api->XPU_REG_BAND_CHANNEL_write( (priv->use_short_slot<<24)|(priv->band<<16)|priv->actual_rx_lo );
+    } else if ((!info->use_short_slot) && priv->use_short_slot==true) {
+      priv->use_short_slot=false;
+      xpu_api->XPU_REG_BAND_CHANNEL_write( (priv->use_short_slot<<24)|(priv->band<<16)|priv->actual_rx_lo );
+    }
+  }
 
   if (changed & BSS_CHANGED_BEACON_ENABLED) {
     printk("%s openwifi_bss_info_changed WARNING BSS_CHANGED_BEACON_ENABLED\n",sdr_compatible_str);
@@ -2133,7 +2133,11 @@ static int openwifi_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *
 
 static const struct ieee80211_ops openwifi_ops = {
 	.tx			       = openwifi_tx,
-    .wake_tx_queue	   = ieee80211_handle_wake_tx_queue,
+  .wake_tx_queue	   = ieee80211_handle_wake_tx_queue,
+  .add_chanctx = ieee80211_emulate_add_chanctx,
+  .remove_chanctx = ieee80211_emulate_remove_chanctx,
+  .change_chanctx = ieee80211_emulate_change_chanctx,
+  .switch_vif_chanctx = ieee80211_emulate_switch_vif_chanctx,
 	.start			   = openwifi_start,
 	.stop			   = openwifi_stop,
 	.add_interface	   = openwifi_add_interface,

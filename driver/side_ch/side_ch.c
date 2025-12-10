@@ -382,7 +382,7 @@ static int get_side_info(int num_eq, int iq_len) {
 		return(-2);
 
 	side_info_buf_size = num_dma_symbol*8;
-	side_info_buf_dma = dma_map_single(chan_to_ps_dev->dev, side_info_buf, side_info_buf_size, DMA_DEV_TO_MEM);
+	side_info_buf_dma = dma_map_single(chan_to_ps_dev->dev, side_info_buf, side_info_buf_size, DMA_FROM_DEVICE);
 	if (dma_mapping_error(chan_to_ps_dev->dev, side_info_buf_dma)) {
 		printk("%s get_side_info WARNING chan_to_ps_dev DMA mapping error\n", side_ch_compatible_str);
 		return(-3);
@@ -422,11 +422,11 @@ static int get_side_info(int num_eq, int iq_len) {
 		goto err_dst_buf_with_unmap;
 	}
 
-	dma_unmap_single(chan_to_ps_dev->dev, side_info_buf_dma, side_info_buf_size, DMA_DEV_TO_MEM);
+	dma_unmap_single(chan_to_ps_dev->dev, side_info_buf_dma, side_info_buf_size, DMA_FROM_DEVICE);
 	return(side_info_buf_size);
 
 err_dst_buf_with_unmap:
-	dma_unmap_single(chan_to_ps_dev->dev, side_info_buf_dma, side_info_buf_size, DMA_DEV_TO_MEM);
+	dma_unmap_single(chan_to_ps_dev->dev, side_info_buf_dma, side_info_buf_size, DMA_FROM_DEVICE);
 	return(-100);
 }
 
