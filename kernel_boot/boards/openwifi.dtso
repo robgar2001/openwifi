@@ -25,8 +25,16 @@
 		};
 	};
 
+	// Ensure that fabric clocks are enabled, for some reason, zynq-7000.dtsi of Linux kernel turns this off (U-Boot does not)
+    fragment@1{
+        target = <&clkc>;
+        __overlay__{
+            fclk-enable = <0xf>;
+        };
+    };
+
 	// Set default interrupt parent
-	fragment@1{
+	fragment@2{
 		target-path = "/";
 		__overlay__{
 			interrupt-parent = <&intc>;
@@ -35,7 +43,7 @@
 
 	
 	// Insert axi devices in fpga
-	fragment@2{
+	fragment@3{
 		target-path = "/";
 		__overlay__{
 			fpga-axi@0 {
@@ -225,8 +233,8 @@
 
 	
 	// Insert AD9361 SPI device and other changes to amba bus
-	fragment@3{
-		target-path = "/amba";
+	fragment@4{
+		target-path = "/axi";
 		__overlay__{
 			#address-cells = <1>;
 			#size-cells = <1>;
@@ -361,7 +369,7 @@
 	};
 	
 	// Insert gpio gated clocks
-	fragment@4{
+	fragment@5{
 		target-path = "/";
 		__overlay__{
 			gated_40M_ad9361_clk: ad9361-refclk-gpio-gate@0 {
