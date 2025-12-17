@@ -1,24 +1,7 @@
 
 / {
-	zynqmp_ipi {
-		phandle = <0x43>;
-
-		mailbox@ff990400 {
-			u-boot,dm-pre-reloc;
-			reg = <0x00 0xff9905c0 0x00 0x20 0x00 0xff9905e0 0x00 0x20 0x00 0xff990e80 0x00 0x20 0x00 0xff990ea0 0x00 0x20>;
-			reg-names = "local_request_region\0local_response_region\0remote_request_region\0remote_response_region";
-			#mbox-cells = <0x01>;
-			xlnx,ipi-id = <0x04>;
-			phandle = <0x05>;
-		};
-	};
-
 	firmware {
 		zynqmp-firmware {
-			zynqmp-power {
-				mboxes = <0x05 0x00 0x05 0x01>;
-			};
-
 			pcap {
 				clock-names = "ref_clk";
 				clocks = <0x03 0x29>;
@@ -34,13 +17,6 @@
 				compatible = "xlnx,zynqmp-rsa";
 				phandle = <0x59>;
 			};
-
-			gpio {
-				compatible = "xlnx,zynqmp-gpio-modepin";
-				gpio-controller;
-				#gpio-cells = <0x02>;
-				phandle = <0x23>;
-			};
 		};
 	};
 
@@ -49,133 +25,7 @@
 	};
 
 	axi {
-		can@ff070000 {
-			status = "okay";
-			pinctrl-names = "default";
-			pinctrl-0 = <0x0d>;
-		};
-
-		dma@fd500000 {
-			status = "okay";
-		};
-
-		dma@fd510000 {
-			status = "okay";
-			#stream-id-cells = <0x01>;
-		};
-
-		dma@fd520000 {
-			status = "okay";
-			interrupts = <0x00 0x7e 0x04>;
-			#stream-id-cells = <0x01>;
-		};
-
-		dma@fd530000 {
-			status = "okay";
-			interrupts = <0x00 0x7f 0x04>;
-			#stream-id-cells = <0x01>;
-		};
-
-		dma@fd540000 {
-			status = "okay";
-			interrupts = <0x00 0x80 0x04>;
-			#stream-id-cells = <0x01>;
-		};
-
-		dma@fd550000 {
-			status = "okay";
-			interrupts = <0x00 0x81 0x04>;
-			#stream-id-cells = <0x01>;
-		};
-
-		dma@fd560000 {
-			status = "okay";
-			interrupts = <0x00 0x82 0x04>;
-			#stream-id-cells = <0x01>;
-		};
-
-		dma@fd570000 {
-			status = "okay";
-			interrupts = <0x00 0x83 0x04>;
-			#stream-id-cells = <0x01>;
-		};
-
-		gpu@fd4b0000 {
-			status = "okay";
-			compatible = "arm,mali-400\0arm,mali-utgard";
-			reg = <0x00 0xfd4b0000 0x00 0x10000>;
-			interrupt-parent = <0x04>;
-			interrupts = <0x00 0x84 0x04 0x00 0x84 0x04 0x00 0x84 0x04 0x00 0x84 0x04 0x00 0x84 0x04 0x00 0x84 0x04>;
-			interrupt-names = "IRQGP\0IRQGPMMU\0IRQPP0\0IRQPPMMU0\0IRQPP1\0IRQPPMMU1";
-			clock-names = "gpu\0gpu_pp0\0gpu_pp1";
-			power-domains = <0x0c 0x3a>;
-			clocks = <0x03 0x18 0x03 0x19 0x03 0x1a>;
-			phandle = <0x67>;
-		};
-
-		memory-controller@fd070000 {
-			compatible = "xlnx,zynqmp-ddrc-2.40a";
-			reg = <0x00 0xfd070000 0x00 0x30000>;
-			interrupt-parent = <0x04>;
-			interrupts = <0x00 0x70 0x04>;
-			phandle = <0x70>;
-		};
-
-		ethernet@ff0e0000 {
-			status = "okay";
-			interrupts = <0x00 0x3f 0x04 0x00 0x3f 0x04>;
-			#address-cells = <0x01>;
-			#size-cells = <0x00>;
-			#stream-id-cells = <0x01>;
-			iommus = <0x0e 0x877>;
-			power-domains = <0x0c 0x20>;
-			clocks = <0x03 0x1f 0x03 0x6b 0x03 0x30 0x03 0x34 0x03 0x2c>;
-			phy-handle = <0x0f>;
-			phy-mode = "rgmii-id";
-			pinctrl-names = "default";
-			pinctrl-0 = <0x10>;
-			phandle = <0x75>;
-
-			ethernet-phy@c {
-				reg = <0x0c>;
-				ti,rx-internal-delay = <0x08>;
-				ti,tx-internal-delay = <0x0a>;
-				ti,fifo-depth = <0x01>;
-				ti,dp83867-rxctrl-strap-quirk;
-				phandle = <0x0f>;
-			};
-		};
-
-		gpio@ff0a0000 {
-			interrupts = <0x00 0x10 0x04>;
-			clocks = <0x03 0x1f>;
-			phandle = <0x14>;
-		};
-
-		i2c@ff020000 {
-			status = "okay";
-			interrupts = <0x00 0x11 0x04>;
-			clocks = <0x03 0x3d>;
-			phandle = <0x76>;
-		};
-
 		i2c@ff030000 {
-			compatible = "cdns,i2c-r1p14";
-			status = "okay";
-			interrupt-parent = <0x04>;
-			interrupts = <0x00 0x12 0x04>;
-			reg = <0x00 0xff030000 0x00 0x1000>;
-			#address-cells = <0x01>;
-			#size-cells = <0x00>;
-			power-domains = <0x0c 0x26>;
-			clocks = <0x03 0x3e>;
-			clock-frequency = <0x61a80>;
-			pinctrl-names = "default\0gpio";
-			pinctrl-0 = <0x15>;
-			pinctrl-1 = <0x16>;
-			scl-gpios = <0x14 0x10 0x00>;
-			sda-gpios = <0x14 0x11 0x00>;
-			phandle = <0x79>;
 
 			i2c-mux@74 {
 				i2c@4 {
@@ -223,105 +73,47 @@
 			phandle = <0x8b>;
 		};
 
-		spi@ff0f0000 {
-			status = "okay";
-			#stream-id-cells = <0x01>;
-			clocks = <0x03 0x35 0x03 0x1f>;
-			is-dual = <0x01>;
-			phandle = <0x90>;
-		};
-
-		phy@fd400000 {
-			status = "okay";
-			clocks = <0x1b 0x00 0x05 0x1b 0x00 0x03 0x1b 0x00 0x02 0x1b 0x00 0x00>;
-			clock-names = "ref0\0ref1\0ref2\0ref3";
-			phandle = <0x1d>;
-		};
-
-
-
-		serial@ff000000 {
-			status = "okay";
-			clocks = <0x03 0x38 0x03 0x1f>;
-			pinctrl-names = "default";
-			pinctrl-0 = <0x21>;
-		};
-
-		serial@ff010000 {
-			status = "okay";
-			clocks = <0x03 0x39 0x03 0x1f>;
-			pinctrl-names = "default";
-			pinctrl-0 = <0x22>;
-        };
-
 		usb0@ff9d0000 {
-			status = "okay";
 			clock-names = "bus_clk\0ref_clk";
 			nvmem-cells = <0x1e>;
 			nvmem-cell-names = "soc_revision";
 			clocks = <0x03 0x20 0x03 0x22>;
-			pinctrl-names = "default";
-			pinctrl-0 = <0x24>;
-			phandle = <0x9d>;
 
 			dwc3@fe200000 {
-				status = "okay";
 				interrupt-names = "dwc_usb3\0otg\0hiber";
-				interrupts = <0x00 0x41 0x04 0x00 0x45 0x04 0x00 0x4b 0x04>;
-				#stream-id-cells = <0x01>;
-				iommus = <0x0e 0x860>;
-				snps,quirk-frame-length-adjustment = <0x20>;
 				snps,refclk_fladj;
 				snps,enable_guctl1_resume_quirk;
 				snps,enable_guctl1_ipd_quirk;
 				snps,xhci-stream-quirk;
 				dr_mode = "otg";
-				snps,usb3_lpm_capable;
 				phy-names = "usb3-phy";
 				phys = <0x1d 0x02 0x04 0x00 0x02>;
-				maximum-speed = "super-speed";
 				phandle = <0x9e>;
 			};
-		};
-
-
-		watchdog@fd4d0000 {
-			status = "okay";
-			clocks = <&zynqmp_clk 0x4b>;
-		};
-
-		dma-controller@fd4c0000 {
-			status = "okay";
-			dma-channels = <0x06>;
-			#stream-id-cells = <0x01>;
 		};
 
 	fclk0 {
 		status = "okay";
 		compatible = "xlnx,fclk";
-		clocks = <0x03 0x47>;
-		phandle = <0xa8>;
+		clocks = <&zynqmp_clk 0x47>;
 	};
 
 	fclk1 {
 		status = "okay";
 		compatible = "xlnx,fclk";
-		clocks = <0x03 0x48>;
-		phandle = <0xa9>;
+		clocks = <&zynqmp_clk 0x48>;
 	};
 
 	fclk2 {
 		status = "okay";
 		compatible = "xlnx,fclk";
-		clocks = <0x03 0x49>;
-		phandle = <0xaa>;
+		clocks = <&zynqmp_clk 0x49>;
 	};
 
 	fclk3 {
 		status = "okay";
 		compatible = "xlnx,fclk";
-		clocks = <0x03 0x4a>;
-		phandle = <0xab>;
+		clocks = <&zynqmp_clk 0x4a>;
 	};
 
 	dp_aclk {
@@ -329,7 +121,6 @@
 		#clock-cells = <0x00>;
 		clock-frequency = <0x5f5e100>;
 		clock-accuracy = <0x64>;
-		phandle = <0x26>;
 	};
 
 	chosen {
