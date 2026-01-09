@@ -28,9 +28,11 @@ dtc -@ -I dts -O dtb -o ./$BOARD_NAME/$BOARD_NAME.dtbo ./overlays/$BOARD_NAME.dt
 
 # Check if fixed devicetree.dts present (if so, we should only compile overlays)
 if [ -f "$BOARD_NAME/devicetree.dts" ]; then
-  echo "WARNING: There is a fixed device tree present for $BOARD_NAME, only compiling overlays"
+  echo "WARNING: There is a fixed device tree present for $BOARD_NAME, only overlays are compiled"
   exit 0
 fi
+
+echo "---Compiling default $BOARD_NAME device tree---"
 
 declare -A openwifi_name_to_kernel_dts
 openwifi_name_to_kernel_dts=(
@@ -48,8 +50,8 @@ DEFAULT_DTS_FILENAME=${openwifi_name_to_kernel_dts[$BOARD_NAME]}
 
 # Check if DTS exists in DTS folder
 if [ ! -f "$DEFAULT_DTS_FOLDER/$DEFAULT_DTS_FILENAME" ]; then
-  if [ "$#" -gt 1 ]; then # If file not found and non-defaults used, call yourself again, but this time with defaults
-    sh ./construct_device_tree.sh $BOARD_NAME
+  if [ "$#" -gt 2 ]; then # If file not found and non-defaults used, call yourself again, but this time with defaults
+    sh ./construct_device_tree.sh $BOARD_NAME $ARCH
     exit 1
   fi
   echo "WARNING: No default device tree present, only compiling overlays"

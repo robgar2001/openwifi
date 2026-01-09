@@ -257,7 +257,7 @@
 					compatible = "adi,ad9361";
 					reg = <0x0>;
 					spi-cpha;
-					spi-max-frequency = <0x989680>;
+					spi-max-frequency = <10000000>;
 					clocks = <&gated_40M_ad9361_clk 0x0>;
 					clock-names = "ad9361_ext_refclk";
 					clock-output-names = "rx_sampl_clk", "tx_sampl_clk";
