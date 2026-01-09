@@ -508,10 +508,10 @@ static int dev_probe(struct platform_device *pdev)
 	if (IS_ERR(base_addr))
 		return PTR_ERR(base_addr);
 
-	printk("%s dev_probe io start 0x%08x end 0x%08x name %s flags 0x%08x desc 0x%08x\n", xpu_compatible_str,io->start,io->end,io->name,(u32)io->flags,(u32)io->desc);
-	printk("%s dev_probe base_addr 0x%08x\n", xpu_compatible_str,(u32)base_addr);
-	printk("%s dev_probe xpu_driver_api_inst 0x%08x\n", xpu_compatible_str, (u32)&xpu_driver_api_inst);
-	printk("%s dev_probe             xpu_api 0x%08x\n", xpu_compatible_str, (u32)xpu_api);
+	printk("%s dev_probe io start 0x%016llx end 0x%016llx name %s flags 0x%08x desc 0x%08x\n", xpu_compatible_str, (long long unsigned)io->start, (long long unsigned)io->end,io->name,(u32)io->flags,(u32)io->desc);
+	printk("%s dev_probe base_addr %p\n", xpu_compatible_str, base_addr);
+	printk("%s dev_probe xpu_driver_api_inst %p\n", xpu_compatible_str, &xpu_driver_api_inst);
+	printk("%s dev_probe             xpu_api %p\n", xpu_compatible_str, xpu_api);
 
 	printk("%s dev_probe reset tsf timer\n", xpu_compatible_str);
 	xpu_api->XPU_REG_TSF_LOAD_VAL_write(0,0);
@@ -533,9 +533,9 @@ static int dev_remove(struct platform_device *pdev)
 {
 	printk("\n");
 
-	printk("%s dev_remove base_addr 0x%08x\n", xpu_compatible_str,(u32)base_addr);
-	printk("%s dev_remove xpu_driver_api_inst 0x%08x\n", xpu_compatible_str, (u32)&xpu_driver_api_inst);
-	printk("%s dev_remove             xpu_api 0x%08x\n", xpu_compatible_str, (u32)xpu_api);
+	printk("%s dev_remove base_addr %p\n", xpu_compatible_str, base_addr);
+	printk("%s dev_remove xpu_driver_api_inst %p\n", xpu_compatible_str, &xpu_driver_api_inst);
+	printk("%s dev_remove             xpu_api %p\n", xpu_compatible_str, xpu_api);
 
 	printk("%s dev_remove succeed!\n", xpu_compatible_str);
 	return 0;

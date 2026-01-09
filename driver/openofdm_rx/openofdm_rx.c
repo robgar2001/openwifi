@@ -160,10 +160,10 @@ static int dev_probe(struct platform_device *pdev)
 	if (IS_ERR(base_addr))
 		return PTR_ERR(base_addr);
 
-	printk("%s dev_probe io start 0x%08x end 0x%08x name %s flags 0x%08x desc 0x%08x\n", openofdm_rx_compatible_str,io->start,io->end,io->name,(u32)io->flags,(u32)io->desc);
-	printk("%s dev_probe base_addr 0x%08x\n", openofdm_rx_compatible_str,(u32)base_addr);
-	printk("%s dev_probe openofdm_rx_driver_api_inst 0x%08x\n", openofdm_rx_compatible_str, (u32)&openofdm_rx_driver_api_inst);
-	printk("%s dev_probe             openofdm_rx_api 0x%08x\n", openofdm_rx_compatible_str, (u32)openofdm_rx_api);
+	printk("%s dev_probe io start 0x%016llx end 0x%016llx name %s flags 0x%08x desc 0x%08x\n", openofdm_rx_compatible_str,(long long unsigned)io->start,(long long unsigned)io->end,io->name,(u32)io->flags,(u32)io->desc);
+	printk("%s dev_probe base_addr %p\n", openofdm_rx_compatible_str, base_addr);
+	printk("%s dev_probe openofdm_rx_driver_api_inst %p\n", openofdm_rx_compatible_str, &openofdm_rx_driver_api_inst);
+	printk("%s dev_probe             openofdm_rx_api %p\n", openofdm_rx_compatible_str, openofdm_rx_api);
 
 	printk("%s dev_probe succeed!\n", openofdm_rx_compatible_str);
 
@@ -176,9 +176,9 @@ static int dev_remove(struct platform_device *pdev)
 {
 	printk("\n");
 
-	printk("%s dev_remove base_addr 0x%08x\n", openofdm_rx_compatible_str,(u32)base_addr);
-	printk("%s dev_remove openofdm_rx_driver_api_inst 0x%08x\n", openofdm_rx_compatible_str, (u32)&openofdm_rx_driver_api_inst);
-	printk("%s dev_remove             openofdm_rx_api 0x%08x\n", openofdm_rx_compatible_str, (u32)openofdm_rx_api);
+	printk("%s dev_remove base_addr %p\n", openofdm_rx_compatible_str, base_addr);
+	printk("%s dev_remove openofdm_rx_driver_api_inst %p\n", openofdm_rx_compatible_str, &openofdm_rx_driver_api_inst);
+	printk("%s dev_remove             openofdm_rx_api %p\n", openofdm_rx_compatible_str, openofdm_rx_api);
 
 	printk("%s dev_remove succeed!\n", openofdm_rx_compatible_str);
 	return 0;
