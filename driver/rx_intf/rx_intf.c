@@ -20,6 +20,7 @@
 #include <linux/slab.h>
 #include <linux/clk.h>
 #include <linux/io-64-nonatomic-lo-hi.h>
+#include <linux/types.h>
 
 #include "../hw_def.h"
 
@@ -405,7 +406,7 @@ static int dev_probe(struct platform_device *pdev)
 		return PTR_ERR(base_addr);
 
 	rx_intf_api->io_start = io->start;
-	rx_intf_api->base_addr = (u64)base_addr;
+	rx_intf_api->base_addr = (uintptr_t)base_addr;
 
 	printk("%s dev_probe io start 0x%016llx end 0x%016llx name %s flags 0x%08x desc 0x%08x\n", rx_intf_compatible_str,(long long unsigned)io->start,(long long unsigned)io->end,io->name,(u32)io->flags,(u32)io->desc);
 	printk("%s dev_probe base_addr %p\n", rx_intf_compatible_str, base_addr);
