@@ -2,24 +2,8 @@
 /plugin/;
 
 / {
-
-    // Insert clocks
-    fragment@0{
-        target-path="/";
-        __overlay__{
-            clocks {
-                clk_40M_fixed: clock@0 {
-                    compatible = "fixed-clock";
-                    clock-frequency = <40000000>;
-                    clock-output-names = "ad9361_ext_refclk";
-                    #clock-cells = <0>;
-                };
-            };
-        };
-    };
-
     // Insert axi devices in fpga
-    fragment@1{
+    fragment@0{
         target-path = "/";
         __overlay__{
             fpga-axi@0 {
@@ -196,7 +180,7 @@
     };
 
     // Insert AD9361 SPI device and other changes to amba bus
-    fragment@2{
+    fragment@1{
         target = <&spi0>;
         __overlay__{
             ad9361_phy: ad9361-phy@0 {
@@ -204,7 +188,6 @@
                 reg = <0x00>;
                 spi-cpha;
                 spi-max-frequency = <10000000>;
-                clocks = <&clk_40M_fixed 0x00>;
                 clock-names = "ad9361_ext_refclk";
                 clock-output-names = "rx_sampl_clk", "tx_sampl_clk";
                 #clock-cells = <1>;
@@ -217,7 +200,6 @@
                 adi,lvds-rx-onchip-termination-enable;
                 adi,rx-data-delay = <0x04>;
                 adi,tx-fb-clock-delay = <0x07>;
-                adi,dcxo-coarse-and-fine-tune = <0x08 0x1720>;
                 adi,2rx-2tx-mode-enable;
                 adi,frequency-division-duplex-mode-enable;
                 adi,rx-rf-port-input-select = <0x00>;
