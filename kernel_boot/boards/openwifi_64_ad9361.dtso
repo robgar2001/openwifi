@@ -159,7 +159,7 @@
                     reg = <0x99020000 0x6000>;
                     // dmas = <0x3c 0x00>;
                     // dma-names = "rx";
-                    spibus-connected = <0x3d>;
+                    spibus-connected = <&ad9361_phy>;
                 };
 
                 cf-ad9361-dds-core-lpc@99024000 {
@@ -179,8 +179,38 @@
         };
     };
 
-    // Insert AD9361 SPI device and other changes to amba bus
+    // Add FPGA fabric clocks
     fragment@1{
+        target-path = "/";
+        __overlay__{
+        	fclk0: fclk0 {
+        		status = "okay";
+        		compatible = "xlnx,fclk";
+        		clocks = <&zynqmp_clk 0x47>;
+        	};
+
+        	fclk1: fclk1 {
+        		status = "okay";
+        		compatible = "xlnx,fclk";
+        		clocks = <&zynqmp_clk 0x48>;
+        	};
+
+        	fclk2: fclk2 {
+        		status = "okay";
+        		compatible = "xlnx,fclk";
+        		clocks = <&zynqmp_clk 0x49>;
+        	};
+
+        	fclk3: fclk3 {
+        		status = "okay";
+        		compatible = "xlnx,fclk";
+        		clocks = <&zynqmp_clk 0x4a>;
+        	};
+        };
+    };
+
+    // Insert AD9361 SPI device
+    fragment@2{
         target = <&spi0>;
         __overlay__{
             ad9361_phy: ad9361-phy@0 {
@@ -285,6 +315,14 @@
                 enable-gpios = <&gpio 0x7d 0x00>;
                 txnrx-gpios = <&gpio 0x7e 0x00>;
             };
+        };
+    };
+
+    // Enable SPI bus connecting to ad9361
+    fragment@3{
+        target = <&spi0>;
+        __overlay__{
+            status = "okay";
         };
     };
 };
