@@ -1,0 +1,276 @@
+name: Build Kuiper Kernel, Driver and Tools
+
+# Compile-tests the adi-linux (Kuiper) kernel via prepare_kernel.sh and then the
+# openwifi driver against it via make_all.sh, for both 32-bit (zynq) and 64-bit
+# (zynqmp). Runs without Xilinx Vitis: the scripts are invoked with XILINX_DIR
+# set to "none", which skips the Vitis check/source and uses the apt-installed
+# cross-compiler from PATH (Vitis/Vivado is only needed for the FPGA bitstream,
+# which this job does not build).
+#
+# A separate matrix job cross-compiles the user-space tools (fast_reg_log,
+# side_ch_ctl, inject_80211/analyze_80211 and sdrctl) for both arches using the
+# distro cross toolchain plus the target's multiarch libnl/libpcap dev packages.
+
+on:
+  push:
+    branches: ["master"]
+    paths:
+      - "driver/**"
+      - "user_space/prepare_kernel.sh"
+      - "user_space/fast_reg_log/**"
+      - "user_space/inject_80211/**"
+      - "user_space/sdrctl_src/**"
+      - "user_space/side_ch_ctl_src/**"
+      - "kernel_boot/**"
+      - ".github/workflows/build-kuiper.yml"
+  pull_request:
+    branches: ["master"]
+    paths:
+      - "driver/**"
+      - "user_space/prepare_kernel.sh"
+      - "user_space/fast_reg_log/**"
+      - "user_space/inject_80211/**"
+      - "user_space/sdrctl_src/**"
+      - "user_space/side_ch_ctl_src/**"
+      - "kernel_boot/**"
+      - ".github/workflows/build-kuiper.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Kuiper ${{ matrix.arch }}-bit (kernel + driver)
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [32, 64]
+
+    steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.0
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Checkout openwifi
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          pkgs="build-essential bc bison flex libssl-dev libncurses-dev \
+                u-boot-tools device-tree-compiler kmod cpio rsync"
+          if [ "${{ matrix.arch }}" = "64" ]; then
+            pkgs="$pkgs gcc-aarch64-linux-gnu"
+          else
+            pkgs="$pkgs gcc-arm-linux-gnueabihf"
+          fi
+          sudo apt-get install -y $pkgs
+
+      - name: Prepare adi-linux kernel (no Vitis)
+        working-directory: user_space
+        # "yes '' |" auto-accepts any new symbols from `make oldconfig`.
+        run: yes '' | ./prepare_kernel.sh none ${{ matrix.arch }}
+
+      - name: Build openwifi driver (no Vitis)
+        working-directory: driver
+        run: ./make_all.sh none ${{ matrix.arch }}
+
+      - name: Collect driver modules
+        run: |
+          mkdir -p kuiper_modules
+          find driver -name '*.ko' -exec cp -v {} kuiper_modules/ \;
+          echo "=== built modules ==="
+          ls -la kuiper_modules
+
+      - name: Upload driver modules
+        uses: actions/upload-artifact@v4
+        with:
+          name: openwifi-driver-kuiper-${{ matrix.arch }}bit
+          path: kuiper_modules/*.ko
+          if-no-files-found: error
+          retention-days: 30
+
+  user-space:
+    name: User-space tools (${{ matrix.arch }}-bit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: 32
+            debarch: armhf
+            triplet: arm-linux-gnueabihf
+          - arch: 64
+            debarch: arm64
+            triplet: aarch64-linux-gnu
+
+    steps:
+      - name: Checkout openwifi
+        uses: actions/checkout@v4
+
+      - name: Enable ${{ matrix.debarch }} multiarch and install cross toolchain + libs
+        run: |
+          set -eux
+          codename="$(. /etc/os-release && echo "$VERSION_CODENAME")"
+          # The default apt mirror only serves amd64/i386; pin it to amd64 so apt
+          # does not look there for ${{ matrix.debarch }} packages.
+          if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+            sudo sed -i '/^Types:/a Architectures: amd64' /etc/apt/sources.list.d/ubuntu.sources
+          else
+            sudo sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list
+          fi
+          # The Ubuntu ports mirror carries the arm/arm64 packages.
+          {
+            echo "Types: deb"
+            echo "URIs: http://ports.ubuntu.com/ubuntu-ports"
+            echo "Suites: ${codename} ${codename}-updates ${codename}-backports ${codename}-security"
+            echo "Components: main restricted universe multiverse"
+            echo "Architectures: ${{ matrix.debarch }}"
+            echo "Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg"
+          } | sudo tee /etc/apt/sources.list.d/ports.sources >/dev/null
+          sudo dpkg --add-architecture ${{ matrix.debarch }}
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-${{ matrix.triplet }} make pkg-config file \
+            libnl-3-dev:${{ matrix.debarch }} \
+            libnl-genl-3-dev:${{ matrix.debarch }} \
+            libpcap0.8-dev:${{ matrix.debarch }}
+
+      - name: Cross-compile user-space tools
+        env:
+          CROSS: ${{ matrix.triplet }}
+        run: |
+          set -eux
+          CC="${CROSS}-gcc"
+          out="user_space_tools"
+          mkdir -p "$out"
+
+          # fast_reg_log: single source, no external deps
+          "$CC" -O2 -Wall user_space/fast_reg_log/fast_reg_log.c -o "$out/fast_reg_log"
+
+          # side_ch_ctl: single source, no external deps
+          make -C user_space/side_ch_ctl_src clean
+          make -C user_space/side_ch_ctl_src CC="$CC"
+          cp user_space/side_ch_ctl_src/side_ch_ctl "$out/"
+
+          # inject_80211 + analyze_80211: link libpcap for the target
+          make -C user_space/inject_80211 clean
+          make -C user_space/inject_80211 CC="$CC"
+          cp user_space/inject_80211/inject_80211 user_space/inject_80211/analyze_80211 "$out/"
+
+          # sdrctl: link libnl-3 / libnl-genl-3 for the target (resolved via pkg-config)
+          export PKG_CONFIG_LIBDIR="/usr/lib/${CROSS}/pkgconfig:/usr/share/pkgconfig"
+          make -C user_space/sdrctl_src clean
+          make -C user_space/sdrctl_src CC="$CC"
+          cp user_space/sdrctl_src/sdrctl "$out/"
+
+          echo "=== built user-space tools (${CROSS}) ==="
+          file "$out"/*
+
+      - name: Upload user-space tools
+        uses: actions/upload-artifact@v4
+        with:
+          name: openwifi-user-space-tools-${{ matrix.arch }}bit
+          path: user_space_tools/*
+          if-no-files-found: error
+          retention-days: 30
+
+  # Builds the driver and packages it together with the FPGA bitstream
+  # (system_top.bit.bin) via drv_and_fpga_package_gen.sh. The bitstream is taken
+  # from the public open-sdr/openwifi-hw-img repo (system_top.xsa) and converted
+  # with an open-source bootgen, so no Vitis is required.
+  #
+  # NOTE: boot_bin_gen.sh (BOOT.BIN) is intentionally NOT run here: it needs
+  # Xilinx xsct (Vitis-only) to generate the FSBL from the .xsa, which has no
+  # open-source substitute and cannot run on a Vitis-less GitHub runner.
+  package:
+    name: Driver + FPGA package (${{ matrix.board }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: 32
+            board: zed_fmcs2
+          - arch: 64
+            board: zcu102_fmcs2
+
+    steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.0
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Checkout openwifi
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          pkgs="build-essential bc bison flex libssl-dev libncurses-dev \
+                u-boot-tools device-tree-compiler kmod cpio rsync unzip git"
+          if [ "${{ matrix.arch }}" = "64" ]; then
+            pkgs="$pkgs gcc-aarch64-linux-gnu"
+          else
+            pkgs="$pkgs gcc-arm-linux-gnueabihf"
+          fi
+          sudo apt-get install -y $pkgs
+
+      - name: Build open-source bootgen
+        run: |
+          set -eux
+          git clone --depth 1 https://github.com/Xilinx/bootgen.git /tmp/bootgen-src
+          make -C /tmp/bootgen-src -j"$(nproc)"
+          # The Makefile puts the binary in build/bin/ (EXEC = build/bin/bootgen).
+          sudo install -m 0755 /tmp/bootgen-src/build/bin/bootgen /usr/local/bin/bootgen
+          command -v bootgen
+
+      - name: Fetch FPGA bitstream (.xsa) from openwifi-hw-img
+        env:
+          BOARD: ${{ matrix.board }}
+        run: |
+          set -eux
+          git clone --depth 1 --filter=blob:none --sparse \
+            https://github.com/open-sdr/openwifi-hw-img.git "$GITHUB_WORKSPACE/hw-img"
+          cd "$GITHUB_WORKSPACE/hw-img"
+          git sparse-checkout set --cone "boards/${BOARD}/sdk"
+          ls -la "boards/${BOARD}/sdk"
+
+      - name: Prepare adi-linux kernel (no Vitis)
+        working-directory: user_space
+        run: yes '' | ./prepare_kernel.sh none ${{ matrix.arch }}
+
+      - name: Build driver + FPGA package (no Vitis)
+        working-directory: user_space
+        env:
+          BOARD: ${{ matrix.board }}
+        run: |
+          set -eux
+          ./drv_and_fpga_package_gen.sh "$GITHUB_WORKSPACE/hw-img" none "$BOARD" "$BOARD"
+          # The script itself does not fail-fast; verify it produced a complete package.
+          test -f "drv_and_fpga_${BOARD}.tar.gz"
+          tar tzf "drv_and_fpga_${BOARD}.tar.gz" | grep -q 'system_top.bit.bin'
+          tar tzf "drv_and_fpga_${BOARD}.tar.gz" | grep -q 'sdr.ko'
+
+      - name: Upload driver + FPGA package
+        uses: actions/upload-artifact@v4
+        with:
+          name: openwifi-drv-and-fpga-${{ matrix.board }}
+          path: user_space/drv_and_fpga_${{ matrix.board }}.tar.gz
+          if-no-files-found: error
+          retention-days: 30
