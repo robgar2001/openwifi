@@ -31,7 +31,9 @@ else
     exit 1
 fi
 
-if [ -d "$XILINX_DIR/Vitis" ]; then
+if [ "$XILINX_DIR" = "none" ]; then
+    echo "\$XILINX_DIR is 'none': skipping Vitis, using cross-compiler from PATH"
+elif [ -d "$XILINX_DIR/Vitis" ]; then
     echo "\$XILINX_DIR is found!"
 else
     echo "\$XILINX_DIR is not correct. Please check!"
@@ -45,14 +47,16 @@ else
     echo "\$ARCH_OPTION is valid!"
 fi
 
-XILINX_ENV_FILE=$XILINX_DIR/Vitis/2022.2/settings64.sh
-echo "Expect env file $XILINX_ENV_FILE"
+if [ "$XILINX_DIR" != "none" ]; then
+    XILINX_ENV_FILE=$XILINX_DIR/Vitis/2022.2/settings64.sh
+    echo "Expect env file $XILINX_ENV_FILE"
 
-if [ -f "$XILINX_ENV_FILE" ]; then
-    echo "$XILINX_ENV_FILE is found!"
-else
-    echo "$XILINX_ENV_FILE is not correct. Please check!"
-    exit 1
+    if [ -f "$XILINX_ENV_FILE" ]; then
+        echo "$XILINX_ENV_FILE is found!"
+    else
+        echo "$XILINX_ENV_FILE is not correct. Please check!"
+        exit 1
+    fi
 fi
 
 echo "#define USE_NEW_RX_INTERRUPT 1" > pre_def.h
@@ -82,7 +86,9 @@ if [[ -n $7 ]]; then
     echo "#define $DEFINE5" >> pre_def.h
 fi
 
-source $XILINX_ENV_FILE
+if [ "$XILINX_DIR" != "none" ]; then
+    source $XILINX_ENV_FILE
+fi
 
 if [ "$ARCH_OPTION" == "64" ]; then
     LINUX_KERNEL_SRC_DIR=$OPENWIFI_DIR/adi-linux-64/

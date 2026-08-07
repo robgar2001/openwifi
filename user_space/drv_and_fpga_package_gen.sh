@@ -15,14 +15,20 @@ OPENWIFI_HW_IMG_DIR=$1
 XILINX_DIR=$2
 BOARD_NAME=$3
 
-XILINX_ENV_FILE=$XILINX_DIR/Vitis/2022.2/settings64.sh
-echo "Expect env file $XILINX_ENV_FILE"
-
-if [ -f "$XILINX_ENV_FILE" ]; then
-    echo "$XILINX_ENV_FILE is found!"
+if [ "$XILINX_DIR" == "none" ]; then
+    # CI/no-Vitis mode: expect an open-source bootgen on PATH; skip the Vitis env.
+    echo "XILINX_DIR=none: skipping Vitis env, expecting bootgen on PATH"
+    command -v bootgen >/dev/null 2>&1 || { echo "bootgen not found on PATH!"; exit 1; }
 else
-    echo "$XILINX_ENV_FILE is not correct. Please check!"
-    exit 1
+    XILINX_ENV_FILE=$XILINX_DIR/Vitis/2022.2/settings64.sh
+    echo "Expect env file $XILINX_ENV_FILE"
+
+    if [ -f "$XILINX_ENV_FILE" ]; then
+        echo "$XILINX_ENV_FILE is found!"
+    else
+        echo "$XILINX_ENV_FILE is not correct. Please check!"
+        exit 1
+    fi
 fi
 
 if [ "$BOARD_NAME" != "neptunesdr" ] && [ "$BOARD_NAME" != "antsdr" ] && [ "$BOARD_NAME" != "antsdr_e200" ] && [ "$BOARD_NAME" != "e310v2" ]  && [ "$BOARD_NAME" != "sdrpi" ] && [ "$BOARD_NAME" != "zc706_fmcs2" ] && [ "$BOARD_NAME" != "zc702_fmcs2" ] && [ "$BOARD_NAME" != "zed_fmcs2" ] && [ "$BOARD_NAME" != "adrv9361z7035" ] && [ "$BOARD_NAME" != "adrv9364z7020" ] && [ "$BOARD_NAME" != "zcu102_fmcs2" ] && [ "$BOARD_NAME" != "zcu102_9371" ]; then
@@ -68,7 +74,9 @@ fi
 
 set -x
 
-source $XILINX_ENV_FILE
+if [ "$XILINX_DIR" != "none" ]; then
+    source $XILINX_ENV_FILE
+fi
 
 cp $BIT_FILENAME ./
 bootgen -image system_top.bif -arch $ARCH -process_bitstream bin -w

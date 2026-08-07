@@ -30,7 +30,9 @@ else
     exit 1
 fi
 
-if [ -d "$XILINX_DIR/Vitis" ]; then
+if [ "$XILINX_DIR" = "none" ]; then
+    echo "\$XILINX_DIR is 'none': skipping Vitis, using cross-compiler from PATH"
+elif [ -d "$XILINX_DIR/Vitis" ]; then
     echo "\$XILINX_DIR is found!"
 else
     echo "\$XILINX_DIR is not correct. Please check!"
@@ -44,14 +46,16 @@ else
     echo "\$ARCH_OPTION is valid!"
 fi
 
-XILINX_ENV_FILE=$XILINX_DIR/Vitis/2022.2/settings64.sh
-echo "Expect env file $XILINX_ENV_FILE"
+if [ "$XILINX_DIR" != "none" ]; then
+    XILINX_ENV_FILE=$XILINX_DIR/Vitis/2022.2/settings64.sh
+    echo "Expect env file $XILINX_ENV_FILE"
 
-if [ -f "$XILINX_ENV_FILE" ]; then
-    echo "$XILINX_ENV_FILE is found!"
-else
-    echo "$XILINX_ENV_FILE is not correct. Please check!"
-    exit 1
+    if [ -f "$XILINX_ENV_FILE" ]; then
+        echo "$XILINX_ENV_FILE is found!"
+    else
+        echo "$XILINX_ENV_FILE is not correct. Please check!"
+        exit 1
+    fi
 fi
 
 if [ "$ARCH_OPTION" == "64" ]; then
@@ -78,16 +82,24 @@ home_dir=$(pwd)
 
 set -x
 
-cd $OPENWIFI_DIR/
-git submodule init $LINUX_KERNEL_SRC_DIR_NAME
-cd $OPENWIFI_DIR/$LINUX_KERNEL_SRC_DIR_NAME
-git reset --hard
-cd $OPENWIFI_DIR/
-git submodule update $LINUX_KERNEL_SRC_DIR_NAME
-cd $OPENWIFI_DIR/$LINUX_KERNEL_SRC_DIR_NAME
-if false; then
-  echo "Reserve for future"
+if [ "$XILINX_DIR" = "none" ]; then
+  # CI/no-Vitis mode: shallow-clone just the kernel branch (the full adi-linux
+  # submodule history is multi-GB and would not fit a CI runner).
+  KERNEL_URL=$(git config --file "$OPENWIFI_DIR/.gitmodules" submodule.$LINUX_KERNEL_SRC_DIR_NAME.url)
+  if [ ! -d "$OPENWIFI_DIR/$LINUX_KERNEL_SRC_DIR_NAME/.git" ]; then
+    rm -rf "$OPENWIFI_DIR/$LINUX_KERNEL_SRC_DIR_NAME"
+    git clone --depth 1 --branch 2026_R1 "$KERNEL_URL" "$OPENWIFI_DIR/$LINUX_KERNEL_SRC_DIR_NAME"
+  fi
+  cd $OPENWIFI_DIR/$LINUX_KERNEL_SRC_DIR_NAME
+  git reset --hard
 else
+  cd $OPENWIFI_DIR/
+  git submodule init $LINUX_KERNEL_SRC_DIR_NAME
+  cd $OPENWIFI_DIR/$LINUX_KERNEL_SRC_DIR_NAME
+  git reset --hard
+  cd $OPENWIFI_DIR/
+  git submodule update $LINUX_KERNEL_SRC_DIR_NAME
+  cd $OPENWIFI_DIR/$LINUX_KERNEL_SRC_DIR_NAME
   # Linux kernel v6.12
   git fetch
   git checkout 2026_R1
@@ -95,7 +107,9 @@ else
   git reset --hard 2026_R1
 fi
 
-source $XILINX_ENV_FILE
+if [ "$XILINX_DIR" != "none" ]; then
+  source $XILINX_ENV_FILE
+fi
 export ARCH=$ARCH_NAME
 export CROSS_COMPILE=$CROSS_COMPILE_NAME
 
