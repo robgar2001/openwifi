@@ -283,6 +283,9 @@ jobs:
         working-directory: doc/img_build_instruction/openwrt
         env:
           OPENWIFI_GITHUB_OWNER: ${{ github.repository_owner }}
+          # Feed tags may still default OPENWIFI_BRANCH to feature/cicd.
+          # Override to master now that feature/cicd is merged upstream.
+          OPENWIFI_BRANCH: master
         run: |
           bash build_image_for_board.sh "${{ matrix.board }}"
           # Show disk usage after the build
