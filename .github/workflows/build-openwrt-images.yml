@@ -20,6 +20,10 @@ env:
   # Follow whoever runs this workflow: your fork when testing, the upstream org
   # on PRs/merges. Requires an openwrt-openwifi repo under the same owner.
   OPENWRT_OPENWIFI_REPO: https://github.com/${{ github.repository_owner }}/openwrt-openwifi.git
+  # openwifi driver source branch the feed clones and builds. Defaults to
+  # master; swap it here, or override it repo-wide with an OPENWIFI_BRANCH
+  # Actions variable. The feed still pins the exact commit via OPENWIFI_REVISION.
+  OPENWIFI_BRANCH: ${{ vars.OPENWIFI_BRANCH || 'master' }}
   # Bump this to invalidate all cached toolchains.
   TOOLCHAIN_CACHE_VERSION: v1
 
